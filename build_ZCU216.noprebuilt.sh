@@ -26,13 +26,13 @@ else
 fi
 
 # Check for prebuilt file
-if [ ! -e "$PREBUILT" ]; then
-    echo "$PREBUILT does not exist."
-    echo "Manually download from https://www.xilinx.com/bin/public/openDownload?filename=focal.aarch64.2.7.0_2021_11_17.tar.gz and rename to $PREBUILT"
-    exit 1
-else
-    echo "Found $PREBUILT"
-fi
+# if [ ! -e "$PREBUILT" ]; then
+#    echo "$PREBUILT does not exist."
+#    echo "Manually download from https://www.xilinx.com/bin/public/openDownload?filename=focal.aarch64.2.7.0_2021_11_17.tar.gz and rename to $PREBUILT"
+#    exit 1
+# else
+#   echo "Found $PREBUILT"
+# fi
 
 # Link the BSP file
 if [ ! -e "$BSP_TARGET" ]; then
@@ -41,8 +41,14 @@ fi
 
 # Clear build.sh to avoid rebuilding other boards
 pushd "$PYNQ_SUBDIR"
-echo "# $(date)" > build.sh
-git commit -a -m "Clean out build.sh"
+   # fix QEMU path https://github.com/Xilinx/PYNQ/pull/1454
+   git cherry-pick e51ee53
+
+   # force build to not update to PYNQ repo from origin 
+   sed -i 's|cd $(BUILD_ROOT)/PYNQ && git fetch origin && git checkout $(PYNQ_MASTER_COMMIT)|# removed for v2.7 patching|g' ${PYNQ_SUBDIR}/sdbuild/Makefile
+
+   # force x11 to not build - causing an error with v2.7 (only required for no-prebuilts)
+   sed -i 's|STAGE3_PACKAGES_aarch64 := pynq x11 resizefs|STAGE3_PACKAGES_aarch64 := pynq resizefs|g' ${PYNQ_SUBDIR}/sdbuild/ubuntu/focal/aarch64/config
 popd
 
 # Move tics files to the proper directory
@@ -50,7 +56,8 @@ cp -a "$TICS_SOURCE_DIR/." "$TICS_TARGET_DIR/"
 
 # Build the project
 pushd "${PYNQ_SUBDIR}/sdbuild"
-make BOARDDIR="${BUILD_ROOT}" PREBUILT="$PREBUILT"
+# make BOARDDIR="${BUILD_ROOT}" PREBUILT="$PREBUILT"
+make BOARDDIR="${BUILD_ROOT}" # REBUILD_PYNQ_SDIST=1 REBUILD_PYNQ_ROOTFS=1
 
 # Define board and version variables
 BOARD="ZCU216"
