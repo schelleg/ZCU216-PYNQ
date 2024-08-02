@@ -16,7 +16,7 @@ TICS_TARGET_DIR="${PYNQ_SUBDIR}/sdbuild/packages/xrfclk/package/xrfclk"
 BSP_SOURCE="${BUILD_ROOT}/xilinx-zcu216-v2020.2-final.bsp"
 BSP_TARGET="${ZCU216_SUBDIR}/xilinx-zcu216-v2020.2-final.bsp"
 
-# Check for prebuilt file
+# Check for bsp
 if [ ! -e "$BSP_SOURCE" ]; then
     echo "$BSP_SOURCE does not exist."
     echo "Manually download from https://www.xilinx.com/member/forms/download/xef.html?filename=xilinx-zcu216-v2020.2-final.bsp and rename to $BSP_SOURCE"
@@ -39,7 +39,7 @@ if [ ! -e "$BSP_TARGET" ]; then
     ln -s $BSP_SOURCE $BSP_TARGET
 fi
 
-# Clear build.sh to avoid rebuilding other boards
+# some needed patches for building from scratch...
 pushd "$PYNQ_SUBDIR"
    # fix QEMU path https://github.com/Xilinx/PYNQ/pull/1454
    git cherry-pick e51ee53
@@ -56,8 +56,7 @@ cp -a "$TICS_SOURCE_DIR/." "$TICS_TARGET_DIR/"
 
 # Build the project
 pushd "${PYNQ_SUBDIR}/sdbuild"
-# make BOARDDIR="${BUILD_ROOT}" PREBUILT="$PREBUILT"
-make BOARDDIR="${BUILD_ROOT}" # REBUILD_PYNQ_SDIST=1 REBUILD_PYNQ_ROOTFS=1
+make BOARDDIR="${BUILD_ROOT}" 
 
 # Define board and version variables
 BOARD="ZCU216"
@@ -77,8 +76,3 @@ popd
 
 echo "$(date)" >> runtime.txt
 cat runtime.txt
-
-
- 
-
- 
